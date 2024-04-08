@@ -14,8 +14,18 @@ public class RequestHandleInfo {
         this.mappingPath = mappingPath;
     }
 
-    public void handle(String url) {
-        //TODO: invoke the methodHandle
+    public boolean validate(Request request) {
+        //TODO: 
+        return false;
+    }
+
+    public Object handle(Object[] arguments) {
+        try {
+            return methodHandle.invoke(arguments);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public RequestType getRequestType() {
