@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.fireal.web.path.AntPathMatcher;
+import com.fireal.web.path.PathMatcher;
 import com.fireal.web.util.ReflectUtil;
 
 import fireal.core.Container;
@@ -23,6 +25,7 @@ public class DispatcherServlet extends HttpServlet{
 
     private Container container;
     private List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
+    private PathMatcher pathMatcher = new AntPathMatcher();
 
     public DispatcherServlet(Container container) {
         this.container = container;
@@ -76,9 +79,16 @@ public class DispatcherServlet extends HttpServlet{
 
 
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
-        
+        resp.setCharacterEncoding("UTF-8");
+        String mappingUrl = getMappingUrl(req);
+        for (RequestHandleInfo requestHandleInfo : requestHandleInfos) {
+            
+        }
     }
 
-
+    private String getMappingUrl(HttpServletRequest req) {
+        //TODO: get mapping url
+        return null;
+    }
 
 }
