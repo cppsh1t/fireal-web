@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.fireal.web.path.AntPathMatcher;
 import com.fireal.web.path.PathMatcher;
@@ -48,7 +49,7 @@ public class DispatcherServlet extends HttpServlet{
                 try {
                     MethodHandle methodHandle = lookup.unreflect(method);
                     methodHandle = methodHandle.bindTo(container.getBean(def.getKeyType()));
-                    requestHandleInfos.add(new RequestHandleInfo(methodHandle, requestType, mappingPath));
+                    requestHandleInfos.add(new RequestHandleInfo(methodHandle, requestType, mappingPath, 0));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -81,9 +82,31 @@ public class DispatcherServlet extends HttpServlet{
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         resp.setCharacterEncoding("UTF-8");
         String mappingUrl = getMappingUrl(req);
-        for (RequestHandleInfo requestHandleInfo : requestHandleInfos) {
-            
+        RequestHandleInfo requestHandleInfo = requestHandleInfos.stream()
+                .filter(info -> pathMatcher.match(info.getMappingPath(), mappingUrl) && info.validate(mappingUrl))
+                .sorted().findFirst().orElse(null);
+        if (requestHandleInfo == null) return;
+        Object result = null;
+        if (requestHandleInfo.hasPathVariable()) {
+            result = requestHandleInfo.handle(null, null);//TODO:
+        } else {
+            result = requestHandleInfo.handle(null);//TODO:
         }
+        if (result != null) writeResponse(resp, result);
+    }
+
+    private Object[] parsePathArguments(String path) {
+        //TODO:
+        return null;
+    }
+
+    private Map<String, Object> parsePathVariable(String path) {
+        //TODO:
+        return null;
+    }
+
+    private void writeResponse(HttpServletResponse resp, Object result) {
+        //TODO:
     }
 
     private String getMappingUrl(HttpServletRequest req) {
