@@ -17,22 +17,19 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         this.order = order;
     }
 
-    public boolean validate(String url) {
+    //TODO:如果验证正确，可以返回转化后的参数,应该加一个序列化接口
+    public RequestParamHolder validate(String url) {
         //TODO: 
-        return false;
+        return null;
     }
 
-    public Object handle(Object[] arguments) {
-        try {
-            return methodHandle.invoke(arguments);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public Object handle(Object[] arguments, Map<String,Object> pathVaiableMap) {
-        //TODO:
+    public Object handle(RequestParamHolder params) {
+        // try {
+        //     return methodHandle.invoke(arguments);
+        // } catch (Throwable e) {
+        //     e.printStackTrace();
+        //     return null;
+        // }
         return null;
     }
 
@@ -48,6 +45,8 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         return order;
     }
 
+    //TODO: 计划不用他
+    @Deprecated
     public boolean hasPathVariable() {
         //TODO:
         return false;

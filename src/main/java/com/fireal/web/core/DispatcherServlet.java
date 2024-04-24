@@ -49,6 +49,7 @@ public class DispatcherServlet extends HttpServlet{
                 try {
                     MethodHandle methodHandle = lookup.unreflect(method);
                     methodHandle = methodHandle.bindTo(container.getBean(def.getKeyType()));
+                    //TODO: 这里还要判断order,把参数要求序列化
                     requestHandleInfos.add(new RequestHandleInfo(methodHandle, requestType, mappingPath, 0));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -82,17 +83,15 @@ public class DispatcherServlet extends HttpServlet{
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         resp.setCharacterEncoding("UTF-8");
         String mappingUrl = getMappingUrl(req);
-        RequestHandleInfo requestHandleInfo = requestHandleInfos.stream()
-                .filter(info -> pathMatcher.match(info.getMappingPath(), mappingUrl) && info.validate(mappingUrl))
-                .sorted().findFirst().orElse(null);
-        if (requestHandleInfo == null) return;
-        Object result = null;
-        if (requestHandleInfo.hasPathVariable()) {
-            result = requestHandleInfo.handle(null, null);//TODO:
-        } else {
-            result = requestHandleInfo.handle(null);//TODO:
+        for (RequestHandleInfo info : requestHandleInfos) {
+            if (!pathMatcher.match(info.getMappingPath(), mappingUrl)) continue;
+            RequestParamHolder requestParams = info.validate(mappingUrl);
+            if (requestParams == null) continue;
+            Object result = info.handle(requestParams);
+            if (result == null) continue;
+            writeResponse(resp, result);
+            break;
         }
-        if (result != null) writeResponse(resp, result);
     }
 
     private Object[] parsePathArguments(String path) {

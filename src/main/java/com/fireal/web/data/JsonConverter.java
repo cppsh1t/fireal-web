@@ -11,7 +11,7 @@ public interface JsonConverter {
     
     Object jsonToObject(String json);
 
-
+    Object stringToObject(String originString);
     public static class DefaultJsonConverter implements JsonConverter{
 
         private ObjectMapper objectMapper = new ObjectMapper();
@@ -34,7 +34,12 @@ public interface JsonConverter {
         public Object jsonToObject(String json) {
             throw new UnsupportedOperationException("Unsupport to convert json to Object.");
         }
-    
+
+        @Override
+        public Object stringToObject(String originString) {
+            // TODO 实现stringToObject
+            return null;
+        }
         
     }
 } 
