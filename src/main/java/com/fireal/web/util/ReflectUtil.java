@@ -2,6 +2,7 @@ package com.fireal.web.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
@@ -72,6 +73,19 @@ public class ReflectUtil {
             return false;
         }
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T invokeMethodInAnnotation(Annotation annotation, String methodName, Object[] args) {
+        Method method;
+        try {
+            method = annotation.getClass().getMethod(methodName);
+            return (T) method.invoke(annotation, args);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
 }

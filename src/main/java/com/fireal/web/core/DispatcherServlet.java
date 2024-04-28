@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.fireal.web.anno.Order;
 import com.fireal.web.path.AntPathMatcher;
 import com.fireal.web.path.PathMatcher;
 import com.fireal.web.util.ReflectUtil;
@@ -27,6 +28,7 @@ public class DispatcherServlet extends HttpServlet{
     private Container container;
     private List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
     private PathMatcher pathMatcher = new AntPathMatcher();
+    private RequestParamBuilder requestParamBuilder = new RequestParamBuilder();
 
     public DispatcherServlet(Container container) {
         this.container = container;
@@ -49,8 +51,13 @@ public class DispatcherServlet extends HttpServlet{
                 try {
                     MethodHandle methodHandle = lookup.unreflect(method);
                     methodHandle = methodHandle.bindTo(container.getBean(def.getKeyType()));
-                    //TODO: 这里还要判断order,把参数要求序列化
-                    requestHandleInfos.add(new RequestHandleInfo(methodHandle, requestType, mappingPath, 0));
+                    int order = 0;
+                    if (method.isAnnotationPresent(Order.class)) {
+                        order = method.getAnnotation(Order.class).value();
+                    }
+                    RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath, order);
+                    Collection<RequestParam> params = requestParamBuilder.build(method);
+                    if (params != null) requestHandleInfos.add(requestHandleInfo);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -81,7 +88,6 @@ public class DispatcherServlet extends HttpServlet{
 
 
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
-        resp.setCharacterEncoding("UTF-8");
         String mappingUrl = getMappingUrl(req);
         for (RequestHandleInfo info : requestHandleInfos) {
             if (!pathMatcher.match(info.getMappingPath(), mappingUrl)) continue;
@@ -105,7 +111,7 @@ public class DispatcherServlet extends HttpServlet{
     }
 
     private void writeResponse(HttpServletResponse resp, Object result) {
-        //TODO:
+        //TODO:这里还要有跳转的逻辑
     }
 
     private String getMappingUrl(HttpServletRequest req) {
