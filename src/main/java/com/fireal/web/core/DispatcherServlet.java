@@ -56,7 +56,7 @@ public class DispatcherServlet extends HttpServlet{
                         order = method.getAnnotation(Order.class).value();
                     }
                     RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath, order);
-                    Collection<RequestParam> params = requestParamBuilder.build(method);
+                    Collection<RequestParamInfo> params = requestParamBuilder.build(method);
                     if (params != null) requestHandleInfos.add(requestHandleInfo);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();

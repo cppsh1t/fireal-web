@@ -10,7 +10,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     private RequestType requestType;
     private String mappingPath;
     private int order;
-    private Collection<RequestParam> requestParams = new ArrayList<>();
+    private Collection<RequestParamInfo> requestParams = new ArrayList<>();
 
     public RequestHandleInfo(MethodHandle methodHandle, RequestType requestType, String mappingPath, int order) {
         this.methodHandle = methodHandle;
@@ -21,7 +21,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
 
     //TODO:如果验证正确，可以返回转化后的参数,应该加一个序列化接口
     public RequestParamHolder validate(String url) {
-        
+        //TODO: 不仅有方法内参数的验证，还要有method自己映射注解的参数要求
         return null;
     }
 
@@ -58,11 +58,11 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         return this.order - o.order;
     }
 
-    public void addReuqestParam(RequestParam... params) {
+    public void addReuqestParam(RequestParamInfo... params) {
         requestParams.addAll(Arrays.asList(params));
     }
 
-    public void addReuqestParam(RequestParam param) {
+    public void addReuqestParam(RequestParamInfo param) {
         requestParams.add(param);
     }
 
