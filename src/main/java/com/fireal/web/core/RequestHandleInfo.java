@@ -4,6 +4,9 @@ import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
 
     private MethodHandle methodHandle;
@@ -11,6 +14,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     private String mappingPath;
     private int order;
     private Collection<RequestParamInfo> requestParams = new ArrayList<>();
+    private Collection<String> requestMappingLimit = new ArrayList<>();
 
     public RequestHandleInfo(MethodHandle methodHandle, RequestType requestType, String mappingPath, int order) {
         this.methodHandle = methodHandle;
@@ -20,7 +24,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     }
 
     //TODO:如果验证正确，可以返回转化后的参数,应该加一个序列化接口
-    public RequestParamHolder validate(String url) {
+    public RequestParamHolder validate(String url, HttpServletRequest req, HttpServletResponse resp) {
         //TODO: 不仅有方法内参数的验证，还要有method自己映射注解的参数要求
         return null;
     }

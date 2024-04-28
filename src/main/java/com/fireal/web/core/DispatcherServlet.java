@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class DispatcherServlet extends HttpServlet{
+public class DispatcherServlet extends HttpServlet {
 
     private Container container;
     private List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
@@ -40,12 +40,14 @@ public class DispatcherServlet extends HttpServlet{
         Collection<BeanDefinition> beanDefinitions = BeanDefinitionUtil.getBeanDefinitions(container);
         Lookup lookup = MethodHandles.lookup();
 
-        for(var def : beanDefinitions) {
-            if (!ReflectUtil.isHandler(def.getObjectType())) continue;
+        for (var def : beanDefinitions) {
+            if (!ReflectUtil.isHandler(def.getObjectType()))
+                continue;
             Collection<Method> methods = ReflectUtil.getRequestMethods(def.getObjectType());
-            if (methods == null || methods.size() == 0) continue;
+            if (methods == null || methods.size() == 0)
+                continue;
 
-            for(Method method : methods) {
+            for (Method method : methods) {
                 RequestType requestType = ReflectUtil.getRequestType(method);
                 String mappingPath = ReflectUtil.getMappingPath(method);
                 try {
@@ -55,9 +57,11 @@ public class DispatcherServlet extends HttpServlet{
                     if (method.isAnnotationPresent(Order.class)) {
                         order = method.getAnnotation(Order.class).value();
                     }
-                    RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath, order);
+                    RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath,
+                            order);
                     Collection<RequestParamInfo> params = requestParamBuilder.build(method);
-                    if (params != null) requestHandleInfos.add(requestHandleInfo);
+                    if (params != null)
+                        requestHandleInfos.add(requestHandleInfo);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -68,54 +72,65 @@ public class DispatcherServlet extends HttpServlet{
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doRequestMapping(RequestType.DELETE, req,   resp);
+        doRequestMapping(RequestType.DELETE, req, resp);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doRequestMapping(RequestType.GET, req,   resp);
+        doRequestMapping(RequestType.GET, req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doRequestMapping(RequestType.POST, req,   resp);
+        doRequestMapping(RequestType.POST, req, resp);
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doRequestMapping(RequestType.PUT, req,   resp);
+        doRequestMapping(RequestType.PUT, req, resp);
     }
-
 
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
         for (RequestHandleInfo info : requestHandleInfos) {
-            if (!pathMatcher.match(info.getMappingPath(), mappingUrl)) continue;
-            RequestParamHolder requestParams = info.validate(mappingUrl);
-            if (requestParams == null) continue;
+            if (!pathMatcher.match(info.getMappingPath(), mappingUrl))
+                continue;
+            RequestParamHolder requestParams = info.validate(mappingUrl, req, resp);
+            if (requestParams == null)
+                continue;
             Object result = info.handle(requestParams);
-            if (result == null) continue;
+            if (result == null)
+                continue;
             writeResponse(resp, result);
             break;
         }
     }
 
     private Object[] parsePathArguments(String path) {
-        //TODO:
+        // TODO:
         return null;
     }
 
     private Map<String, Object> parsePathVariable(String path) {
-        //TODO:
+        // TODO:
         return null;
     }
 
     private void writeResponse(HttpServletResponse resp, Object result) {
-        //TODO:这里还要有跳转的逻辑
+        // TODO:这里还要有跳转的逻辑
+        if (result instanceof String str) {
+            try {
+                resp.getWriter().write(str);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //TODO: 转换成json
+        }
     }
 
     private String getMappingUrl(HttpServletRequest req) {
-        //TODO: get mapping url
+        // TODO: get mapping url
         return null;
     }
 
