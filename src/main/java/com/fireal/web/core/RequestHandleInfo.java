@@ -1,20 +1,27 @@
 package com.fireal.web.core;
 
 import java.lang.invoke.MethodHandle;
+import java.net.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
+import com.fireal.web.exception.RequestParamInfoException;
+import com.fireal.web.util.StringUtils;
+import fireal.structure.Tuple;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
 
-    private MethodHandle methodHandle;
-    private RequestType requestType;
-    private String mappingPath;
-    private int order;
-    private Collection<RequestParamInfo> requestParams = new ArrayList<>();
-    private Collection<String> requestMappingLimit = new ArrayList<>();
+    private final MethodHandle methodHandle;
+    private final RequestType requestType;
+    private final String mappingPath;
+    private final int order;
+    private final Collection<RequestParamInfo> requestParams = new ArrayList<>();
+    private final Collection<String> requestMappingLimit = new ArrayList<>();
 
     public RequestHandleInfo(MethodHandle methodHandle, RequestType requestType, String mappingPath, int order) {
         this.methodHandle = methodHandle;
@@ -23,20 +30,53 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         this.order = order;
     }
 
-    //TODO:如果验证正确，可以返回转化后的参数,应该加一个序列化接口
+    //TODO:这个url应该是验证PathVariable
+    //TODO: 以后再做空优化
     public RequestParamHolder validate(String url, HttpServletRequest req, HttpServletResponse resp) {
-        //TODO: 不仅有方法内参数的验证，还要有method自己映射注解的参数要求
-        return null;
+        Map<String, String> queryMap = StringUtils.parseQueryString(url);
+        boolean containAll = requestMappingLimit.stream().allMatch(queryMap::containsKey);
+        if (!containAll) return null;
+        RequestParamHolder requestParamHolder = new RequestParamHolder();
+        for(RequestParamInfo requestParamInfo : requestParams) {
+            Class<?> originType = requestParamInfo.getOriginType();
+            if (originType != null) {
+                if (originType == HttpServletRequest.class) {
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, req));
+                    continue;
+                }
+                if (originType == HttpServletResponse.class) {
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, resp));
+                    continue;
+                }
+                if (originType == HttpSession.class) {
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, req.getSession()));
+                    continue;
+                }
+                throw new RequestParamInfoException(originType);
+            } else {
+                String targetString = queryMap.get(requestParamInfo.getName());
+                if (targetString == null) {
+                    //TODO: write this exception type
+                    if (requestParamInfo.isRequired()) return null;
+                    Object targetObj = requestParamInfo.getDefaultValue();
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
+                } else {
+                    Object targetObj = ""; //TODO: insert a string cast interface here
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
+                }
+            }
+        }
+        return requestParamHolder;
     }
 
-    public Object handle(RequestParamHolder params) {
-        // try {
-        //     return methodHandle.invoke(arguments);
-        // } catch (Throwable e) {
-        //     e.printStackTrace();
-        //     return null;
-        // }
-        return null;
+    public Object handle(RequestParamHolder holder) {
+         try {
+             Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
+             return methodHandle.invoke(arguments);
+         } catch (Throwable e) {
+             e.printStackTrace();
+             return null;
+         }
     }
 
     public RequestType getRequestType() {
@@ -51,23 +91,28 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         return order;
     }
 
-    //TODO: 计划不用他
-    @Deprecated
-    public boolean hasPathVariable() {
-        return false;
-    }
-
     @Override
     public int compareTo(RequestHandleInfo o) {
         return this.order - o.order;
     }
 
-    public void addReuqestParam(RequestParamInfo... params) {
+    public void addRequestParam(RequestParamInfo... params) {
         requestParams.addAll(Arrays.asList(params));
     }
 
-    public void addReuqestParam(RequestParamInfo param) {
+    public void addRequestParam(Collection<RequestParamInfo> params) {
+        requestParams.addAll(params);
+    }
+
+    public void addRequestParam(RequestParamInfo param) {
         requestParams.add(param);
     }
 
+    public void addRequestMappingLimit(String limit) {
+        requestMappingLimit.add(limit);
+    }
+
+    public void addRequestMappingLimit(String... limit) {
+        requestMappingLimit.addAll(Arrays.asList(limit));
+    }
 }

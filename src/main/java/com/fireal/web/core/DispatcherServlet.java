@@ -49,6 +49,7 @@ public class DispatcherServlet extends HttpServlet {
 
             for (Method method : methods) {
                 RequestType requestType = ReflectUtil.getRequestType(method);
+                //TODO: 这个path好像应该再加上父级的
                 String mappingPath = ReflectUtil.getMappingPath(method);
                 try {
                     MethodHandle methodHandle = lookup.unreflect(method);
@@ -60,40 +61,44 @@ public class DispatcherServlet extends HttpServlet {
                     RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath,
                             order);
                     Collection<RequestParamInfo> params = requestParamBuilder.build(method);
-                    if (params != null)
-                        requestHandleInfos.add(requestHandleInfo);
+                    String[] limits = ReflectUtil.getMappingLimit(method);
+                    requestHandleInfo.addRequestMappingLimit(limits);
+                    if (params != null) requestHandleInfo.addRequestParam(params);
+                    requestHandleInfos.add(requestHandleInfo);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
             }
 
         }
+
+        requestHandleInfos.sort(RequestHandleInfo::compareTo);
     }
 
     @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         doRequestMapping(RequestType.DELETE, req, resp);
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         doRequestMapping(RequestType.GET, req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         doRequestMapping(RequestType.POST, req, resp);
     }
 
     @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         doRequestMapping(RequestType.PUT, req, resp);
     }
 
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
         for (RequestHandleInfo info : requestHandleInfos) {
-            if (!pathMatcher.match(info.getMappingPath(), mappingUrl))
+            if (!pathMatcher.match(info.getMappingPath(), mappingUrl) && info.getRequestType() == requestType)
                 continue;
             RequestParamHolder requestParams = info.validate(mappingUrl, req, resp);
             if (requestParams == null)
@@ -104,11 +109,6 @@ public class DispatcherServlet extends HttpServlet {
             writeResponse(resp, result);
             break;
         }
-    }
-
-    private Object[] parsePathArguments(String path) {
-        // TODO:
-        return null;
     }
 
     private Map<String, Object> parsePathVariable(String path) {

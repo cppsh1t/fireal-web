@@ -49,26 +49,35 @@ public class ReflectUtil {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
+    public static String[] getMappingLimit(Method method) {
+        if (method.isAnnotationPresent(RequestMapping.class)) return method.getAnnotation(RequestMapping.class).params();
+        if (method.isAnnotationPresent(GetMapping.class)) return method.getAnnotation(GetMapping.class).params();
+        if (method.isAnnotationPresent(PostMapping.class)) return method.getAnnotation(PostMapping.class).params();
+        if (method.isAnnotationPresent(PutMapping.class)) return method.getAnnotation(PutMapping.class).params();
+        if (method.isAnnotationPresent(DeleteMapping.class)) return method.getAnnotation(DeleteMapping.class).params();
+        return null;
+    }
+
     public static boolean isAnnotatedRequestMapping(Class<?> clazz) {
         return isAnnotationsPresent(clazz, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
     }
 
-    @SuppressWarnings("unchecked")
     public static boolean isAnnotatedRequestMapping(AccessibleObject obj) {
         return isAnnotationsPresent(obj, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
     }
 
-    public static boolean isAnnotationsPresent(Class<?> clazz, @SuppressWarnings("unchecked") Class<? extends Annotation>... annoClassess) {
-        for(Class<? extends Annotation> annoClass : annoClassess) {
+    @SafeVarargs
+    public static boolean isAnnotationsPresent(Class<?> clazz, Class<? extends Annotation>... annoClasses) {
+        for(Class<? extends Annotation> annoClass : annoClasses) {
             if (clazz.isAnnotationPresent(annoClass)) continue;
             return false;
         }
         return true;
     }
 
-    public static boolean isAnnotationsPresent(AccessibleObject obj, @SuppressWarnings("unchecked") Class<? extends Annotation>... annoClassess) {
-        for(Class<? extends Annotation> annoClass : annoClassess) {
+    @SafeVarargs
+    public static boolean isAnnotationsPresent(AccessibleObject obj, Class<? extends Annotation>... annoClasses) {
+        for(Class<? extends Annotation> annoClass : annoClasses) {
             if (obj.isAnnotationPresent(annoClass)) continue;
             return false;
         }

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class MainTest {
 
     @Test
-    public void testInMethodHanle() throws NoSuchMethodException, IllegalAccessException {
+    public void testInMethodHandle() throws NoSuchMethodException, IllegalAccessException {
         var start = System.currentTimeMillis();
         MethodType methodType = MethodType.methodType(void.class, String.class);
         Lookup lookup = MethodHandles.lookup();
@@ -30,7 +30,7 @@ public class MainTest {
     }
 
     @Test
-    public void testMethodHanleWithReflect() throws NoSuchMethodException, IllegalAccessException {
+    public void testMethodHandleWithReflect() throws NoSuchMethodException, IllegalAccessException {
         Method method = Foo.class.getMethod("hello", String.class);
         Lookup lookup = MethodHandles.lookup();
         MethodHandle methodHandle = lookup.unreflect(method);

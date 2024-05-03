@@ -19,12 +19,7 @@
 
 package com.fireal.web.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Miscellaneous {@link String} utility methods.
@@ -288,8 +283,7 @@ public abstract class StringUtils {
      * <p>
      * The given {@code delimiters} string can consist of any number of
      * delimiter characters. Each of those characters can be used to separate
-     * tokens. A delimiter is always a single character; for multi-character
-     * delimiters, consider using {@link #delimitedListToStringArray}.
+     * tokens. A delimiter is always a single character;
      * 
      * @param str        the {@code String} to tokenize (potentially {@code null} or
      *                   empty)
@@ -299,7 +293,6 @@ public abstract class StringUtils {
      * @return an array of the tokens
      * @see java.util.StringTokenizer
      * @see String#trim()
-     * @see #delimitedListToStringArray
      */
     public static String[] tokenizeToStringArray(String str, String delimiters) {
         return tokenizeToStringArray(str, delimiters, true, true);
@@ -312,7 +305,6 @@ public abstract class StringUtils {
      * The given {@code delimiters} string can consist of any number of
      * delimiter characters. Each of those characters can be used to separate
      * tokens. A delimiter is always a single character; for multi-character
-     * delimiters, consider using {@link #delimitedListToStringArray}.
      * 
      * @param str               the {@code String} to tokenize (potentially
      *                          {@code null} or empty)
@@ -329,7 +321,6 @@ public abstract class StringUtils {
      * @return an array of the tokens
      * @see java.util.StringTokenizer
      * @see String#trim()
-     * @see #delimitedListToStringArray
      */
     public static String[] tokenizeToStringArray(
             String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
@@ -352,4 +343,18 @@ public abstract class StringUtils {
         return toStringArray(tokens);
     }
 
+
+    public static Map<String, String> parseQueryString(String pathString) {
+        Map<String, String> queryParams = new HashMap<>();
+        String[] pairs = pathString.split("&");
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                String key = keyValue[0];
+                String value = keyValue[1];
+                queryParams.put(key, value);
+            }
+        }
+        return queryParams;
+    }
 }

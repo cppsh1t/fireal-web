@@ -40,7 +40,7 @@ public class WebInitializer implements ServletContainerInitializer {
             throw new WebInitializationException("Can't make instance of " + initClass);
         }
 
-        defaultJsonConverter = initializer.getDeafultJsonConverter();
+        defaultJsonConverter = initializer.getDefaultJsonConverter();
         JsonConverter[] converters = initializer.appendJsonConverter();
         if (converters != null) {
             for (JsonConverter converter : converters) {

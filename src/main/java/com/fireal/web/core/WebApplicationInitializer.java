@@ -9,7 +9,7 @@ public interface WebApplicationInitializer {
 
     Class<?> getConfigClass();
 
-    default JsonConverter getDeafultJsonConverter() {
+    default JsonConverter getDefaultJsonConverter() {
         return new JsonConverter.DefaultJsonConverter();
     }
 
