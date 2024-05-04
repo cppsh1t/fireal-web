@@ -2,7 +2,13 @@ package com.fireal.web.data;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fireal.web.core.WebInitializer;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public interface JsonConverter {
@@ -10,10 +16,10 @@ public interface JsonConverter {
     Class<?> getObjectType();
 
     String objectToJson(Object object);
-    
+
     Object jsonToObject(String json);
 
-    Object stringToObject(Map<String, String> originStrings, Class<?> targetType);
+    Object stringToObject(String str);
 
     class DefaultJsonConverter implements JsonConverter{
 
@@ -39,10 +45,9 @@ public interface JsonConverter {
         }
 
         @Override
-        public Object stringToObject(Map<String, String> originStrings, Class<?> targetType) {
-            // TODO 实现stringToObject
+        public Object stringToObject(String str) {
             return null;
         }
-        
+
     }
 } 

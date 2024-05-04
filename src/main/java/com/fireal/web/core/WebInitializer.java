@@ -4,9 +4,8 @@ import jakarta.servlet.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Parameter;
+import java.util.*;
 
 import com.fireal.web.data.JsonConverter;
 import com.fireal.web.exception.WebInitializationException;
@@ -16,10 +15,10 @@ import fireal.core.Container;
 public class WebInitializer implements ServletContainerInitializer {
 
     private static JsonConverter defaultJsonConverter;
-    private static Map<Class<?>, JsonConverter> jsonConverterMap = new HashMap<>();
+    private static final Map<Class<?>, JsonConverter> jsonConverterMap = new HashMap<>();
 
     @Override
-    public void onStartup(Set<Class<?>> set, ServletContext ctx) throws ServletException {
+    public void onStartup(Set<Class<?>> set, ServletContext ctx) {
         Class<?> initClass = null;
         for (Class<?> clazz : set) {
             if (WebApplicationInitializer.class.isAssignableFrom(clazz)) {
@@ -70,5 +69,45 @@ public class WebInitializer implements ServletContainerInitializer {
 
         FilterRegistration.Dynamic filter = ctx.addFilter("mainFilter", new MainFilter());
         filter.addMappingForUrlPatterns(null, true, "/*");
+    }
+
+    public static String objectToJson(Object obj) {
+        Class<?> type = obj.getClass();
+        if (jsonConverterMap.containsKey(type)) {
+            return jsonConverterMap.get(type).objectToJson(obj);
+        }
+        return defaultJsonConverter.objectToJson(obj);
+    }
+
+    public static Object stringToObject(String str, Class<?> targetType) {
+        if (jsonConverterMap.containsKey(targetType)) {
+            return jsonConverterMap.get(targetType).stringToObject(str);
+        } else {
+            return targetType.cast(str);
+        }
+    }
+
+    //FIXME: 只能做一层的构造
+    public static Object constructObject(Map<String, String> map, Class<?> targetType) {
+        List<Constructor<?>> constructors = Arrays.stream(targetType.getConstructors())
+                .filter(con -> Arrays.stream(con.getParameters()).map(Parameter::getName)
+                        .allMatch(map::containsKey))
+                .sorted((c1, c2) -> c2.getParameterCount() - c1.getParameterCount())
+                .toList();
+        for(Constructor<?> constructor : constructors) {
+            Object[] args = new Object[constructor.getParameterCount()];
+            Parameter[] parameters = constructor.getParameters();
+            try {
+                for (int i = 0; i < args.length; i++) {
+                    Parameter parameter = parameters[i];
+                    String name = parameter.getName();
+                    args[i] = WebInitializer.stringToObject(map.get(name), parameter.getType());
+                }
+                return constructor.newInstance(args);
+            } catch (ClassCastException | InstantiationException | IllegalAccessException | InvocationTargetException ignored) {
+            }
+        }
+
+        throw new RuntimeException();//TODO: can't construct
     }
 }

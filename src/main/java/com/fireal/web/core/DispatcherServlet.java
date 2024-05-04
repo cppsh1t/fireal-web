@@ -18,6 +18,7 @@ import com.fireal.web.util.ReflectUtil;
 import fireal.core.Container;
 import fireal.definition.BeanDefinition;
 import fireal.util.BeanDefinitionUtil;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,10 +26,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class DispatcherServlet extends HttpServlet {
 
-    private Container container;
-    private List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
-    private PathMatcher pathMatcher = new AntPathMatcher();
-    private RequestParamBuilder requestParamBuilder = new RequestParamBuilder();
+    private final Container container;
+    private final List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
+    private final PathMatcher pathMatcher = new AntPathMatcher();
+    private final RequestParamBuilder requestParamBuilder = new RequestParamBuilder();
 
     public DispatcherServlet(Container container) {
         this.container = container;
@@ -47,10 +48,11 @@ public class DispatcherServlet extends HttpServlet {
             if (methods == null || methods.size() == 0)
                 continue;
 
+            String handlerMappingPath = ReflectUtil.getMappingPath(def.getObjectType());
             for (Method method : methods) {
                 RequestType requestType = ReflectUtil.getRequestType(method);
-                //TODO: 这个path好像应该再加上父级的
                 String mappingPath = ReflectUtil.getMappingPath(method);
+                mappingPath = handlerMappingPath + mappingPath;
                 try {
                     MethodHandle methodHandle = lookup.unreflect(method);
                     methodHandle = methodHandle.bindTo(container.getBean(def.getKeyType()));
@@ -106,7 +108,7 @@ public class DispatcherServlet extends HttpServlet {
             Object result = info.handle(requestParams);
             if (result == null)
                 continue;
-            writeResponse(resp, result);
+            writeResponse(resp, req, result);
             break;
         }
     }
@@ -116,22 +118,40 @@ public class DispatcherServlet extends HttpServlet {
         return null;
     }
 
-    private void writeResponse(HttpServletResponse resp, Object result) {
-        // TODO:这里还要有跳转的逻辑
-        if (result instanceof String str) {
+    //TODO: 还要有传输值类型的判定
+    private void writeResponse(HttpServletResponse resp, HttpServletRequest req, Object result) {
+        if (result instanceof Router router) {
+            String url = router.getUrl();
+            Router.RouterType routerType = router.getRouterType();
+            Router.recycle(router);
             try {
-                resp.getWriter().write(str);
-            } catch (IOException e) {
+                if (routerType == Router.RouterType.FORWARD) {
+                    RequestDispatcher dispatcher = req.getRequestDispatcher(url);
+                    dispatcher.forward(req, resp);
+                } else {
+                    resp.sendRedirect(url);
+                }
+            } catch (ServletException | IOException e) {
                 e.printStackTrace();
             }
-        } else {
-            //TODO: 转换成json
+        }
+
+        try {
+            if (result instanceof String str) {
+                resp.getWriter().write(str);
+            } else {
+                String json = WebInitializer.objectToJson(result);
+                resp.getWriter().write(json);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private String getMappingUrl(HttpServletRequest req) {
-        // TODO: get mapping url
-        return null;
+        String requestURI = req.getRequestURI();
+        String queryString = req.getQueryString();
+        return queryString == null ? requestURI : requestURI + "?" + queryString;
     }
 
 }

@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
-import com.fireal.web.anno.Controller;
 import com.fireal.web.anno.DeleteMapping;
 import com.fireal.web.anno.GetMapping;
 import com.fireal.web.anno.PostMapping;
@@ -23,12 +22,11 @@ public class ReflectUtil {
 
     public static boolean isHandler(Class<?> clazz) {
         if (!isAnnotatedRequestMapping(clazz)) return false;
-        if (parser.getBeanAnno(clazz) != null) return true;
-        return false;
+        return parser.getBeanAnno(clazz) != null;
     }
 
     public static Collection<Method> getRequestMethods(Class<?> clazz) {
-        return Arrays.stream(clazz.getMethods()).filter(m -> isAnnotatedRequestMapping(m)).toList();
+        return Arrays.stream(clazz.getMethods()).filter(ReflectUtil::isAnnotatedRequestMapping).toList();
     }
 
     public static RequestType getRequestType(Method method) {
@@ -46,6 +44,15 @@ public class ReflectUtil {
         if (method.isAnnotationPresent(PostMapping.class)) return method.getAnnotation(PostMapping.class).value();
         if (method.isAnnotationPresent(PutMapping.class)) return method.getAnnotation(PutMapping.class).value();
         if (method.isAnnotationPresent(DeleteMapping.class)) return method.getAnnotation(DeleteMapping.class).value();
+        return null;
+    }
+
+    public static String getMappingPath(Class<?> clazz) {
+        if (clazz.isAnnotationPresent(RequestMapping.class)) return clazz.getAnnotation(RequestMapping.class).value();
+        if (clazz.isAnnotationPresent(GetMapping.class)) return clazz.getAnnotation(GetMapping.class).value();
+        if (clazz.isAnnotationPresent(PostMapping.class)) return clazz.getAnnotation(PostMapping.class).value();
+        if (clazz.isAnnotationPresent(PutMapping.class)) return clazz.getAnnotation(PutMapping.class).value();
+        if (clazz.isAnnotationPresent(DeleteMapping.class)) return clazz.getAnnotation(DeleteMapping.class).value();
         return null;
     }
 

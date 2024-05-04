@@ -8,7 +8,7 @@ import com.fireal.web.objectPool.ObjectPool;
 public class Router {
 
     private String url;
-    private static RouterCache redirectCache = new RouterCache();
+    private static final RouterCache redirectCache = new RouterCache();
     private RouterType routerType;
 
     private Router() {
@@ -50,8 +50,7 @@ public class Router {
 
     private static class RouterCache implements ObjectPool<Router>{
 
-        private Stack<WeakReference<Router>> objStack = new Stack<>();
-
+        private final Stack<WeakReference<Router>> objStack = new Stack<>();
 
         @Override
         public Router release() {
@@ -67,11 +66,9 @@ public class Router {
 
         @Override
         public void recycle(Router Router) {
-            objStack.push(new WeakReference<Router>(Router));
+            objStack.push(new WeakReference<>(Router));
         }
-        
 
-        
     }
 
 }

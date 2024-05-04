@@ -61,7 +61,14 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
                     Object targetObj = requestParamInfo.getDefaultValue();
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 } else {
-                    Object targetObj = ""; //TODO: insert a string cast interface here
+                    Class<?> targetType = requestParamInfo.getParamType();
+                    Object targetObj;
+                    if (targetType.isPrimitive()) {
+                        String targetStr = queryMap.get(requestParamInfo.getName());
+                        targetObj = WebInitializer.stringToObject(targetStr, targetType);
+                    } else {
+                        targetObj = WebInitializer.constructObject(queryMap, targetType);
+                    }
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 }
             }

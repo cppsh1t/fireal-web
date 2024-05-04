@@ -30,7 +30,8 @@ public class RequestParamBuilder {
                 String name = ReflectUtil.invokeMethodInAnnotation(annotation, "value", null);
                 String defaultValue = ReflectUtil.invokeMethodInAnnotation(annotation, "defaultValue", null);
                 boolean required = ReflectUtil.invokeMethodInAnnotation(annotation, "required", null);
-                RequestParamInfo requestParam = new RequestParamInfo(annotation.annotationType(), name, defaultValue, required);
+                RequestParamInfo requestParam
+                        = new RequestParamInfo(annotation.annotationType(), name, defaultValue, required, parameter.getType());
                 params.add(requestParam);
             } else {
                 Class<?> annoType = annotation.annotationType();

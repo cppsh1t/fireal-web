@@ -6,13 +6,15 @@ public class RequestParamInfo {
     private String name;
     private Object defaultValue;
     private boolean required;
+    private Class<?> paramType;
     private Class<?> originType;
 
-    public RequestParamInfo(Class<?> paramAnnoClass, String name, Object defaultValue, boolean required) {
+    public RequestParamInfo(Class<?> paramAnnoClass, String name, Object defaultValue, boolean required, Class<?> paramType) {
         this.paramAnnoClass = paramAnnoClass;
         this.name = name;
         this.defaultValue = defaultValue;
         this.required = required;
+        this.paramType = paramType;
     }
 
     public RequestParamInfo(Class<?> originType) {
@@ -39,4 +41,7 @@ public class RequestParamInfo {
         return originType;
     }
 
+    public Class<?> getParamType() {
+        return paramType;
+    }
 }
