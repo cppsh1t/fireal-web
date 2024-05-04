@@ -66,29 +66,27 @@ public class ReflectUtil {
     }
 
     public static boolean isAnnotatedRequestMapping(Class<?> clazz) {
-        return isAnnotationsPresent(clazz, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
+        return isAnnotationsPresentAny(clazz, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
     }
 
     public static boolean isAnnotatedRequestMapping(AccessibleObject obj) {
-        return isAnnotationsPresent(obj, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
+        return isAnnotationsPresentAny(obj, RequestMapping.class, PostMapping.class, PutMapping.class, GetMapping.class, DeleteMapping.class);
     }
 
     @SafeVarargs
-    public static boolean isAnnotationsPresent(Class<?> clazz, Class<? extends Annotation>... annoClasses) {
+    public static boolean isAnnotationsPresentAny(Class<?> clazz, Class<? extends Annotation>... annoClasses) {
         for(Class<? extends Annotation> annoClass : annoClasses) {
-            if (clazz.isAnnotationPresent(annoClass)) continue;
-            return false;
+            if (clazz.isAnnotationPresent(annoClass)) return true;
         }
-        return true;
+        return false;
     }
 
     @SafeVarargs
-    public static boolean isAnnotationsPresent(AccessibleObject obj, Class<? extends Annotation>... annoClasses) {
+    public static boolean isAnnotationsPresentAny(AccessibleObject obj, Class<? extends Annotation>... annoClasses) {
         for(Class<? extends Annotation> annoClass : annoClasses) {
-            if (obj.isAnnotationPresent(annoClass)) continue;
-            return false;
+            if (obj.isAnnotationPresent(annoClass)) return true;
         }
-        return true;
+        return false;
     }
 
     @SuppressWarnings("unchecked")

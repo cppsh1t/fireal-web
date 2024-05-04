@@ -1,5 +1,6 @@
 package com.fireal.web.core;
 
+import io.github.classgraph.ClassGraph;
 import jakarta.servlet.*;
 
 import java.lang.reflect.Constructor;
@@ -20,7 +21,11 @@ public class WebInitializer implements ServletContainerInitializer {
     @Override
     public void onStartup(Set<Class<?>> set, ServletContext ctx) {
         Class<?> initClass = null;
-        for (Class<?> clazz : set) {
+        ClassGraph classGraph = new ClassGraph();
+        classGraph.enableClassInfo();
+        var classInfos = classGraph.scan().getAllClasses();
+        var classes = classInfos.loadClasses(true);
+        for (Class<?> clazz : classes) {
             if (WebApplicationInitializer.class.isAssignableFrom(clazz)) {
                 initClass = clazz;
                 break;
@@ -31,7 +36,7 @@ public class WebInitializer implements ServletContainerInitializer {
             throw new WebInitializationException("Can't find a class implements WebApplicationInitializer.");
         }
 
-        WebApplicationInitializer initializer = null;
+        WebApplicationInitializer initializer;
         try {
             initializer = (WebApplicationInitializer) initClass.getConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
@@ -48,14 +53,14 @@ public class WebInitializer implements ServletContainerInitializer {
         }
 
         Class<? extends Container> containerClass = initializer.getContainerClass();
-        Constructor<? extends Container> constructorOfContainer = null;
+        Constructor<? extends Container> constructorOfContainer;
         try {
             constructorOfContainer = containerClass.getConstructor(Class.class);
         } catch (NoSuchMethodException | SecurityException e) {
             throw new WebInitializationException("Can't find right constructor on " + containerClass);
         }
 
-        Container container = null;
+        Container container;
         try {
             container = constructorOfContainer.newInstance(initializer.getConfigClass());
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException

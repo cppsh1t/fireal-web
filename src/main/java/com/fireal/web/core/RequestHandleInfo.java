@@ -1,6 +1,7 @@
 package com.fireal.web.core;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Method;
 import java.net.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,18 +17,20 @@ import jakarta.servlet.http.HttpSession;
 
 public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
 
-    private final MethodHandle methodHandle;
+    private final Method method;
     private final RequestType requestType;
     private final String mappingPath;
     private final int order;
     private final Collection<RequestParamInfo> requestParams = new ArrayList<>();
     private final Collection<String> requestMappingLimit = new ArrayList<>();
+    private final Object invoker;
 
-    public RequestHandleInfo(MethodHandle methodHandle, RequestType requestType, String mappingPath, int order) {
-        this.methodHandle = methodHandle;
+    public RequestHandleInfo(Method method, Object invoker, RequestType requestType, String mappingPath, int order) {
+        this.method = method;
         this.requestType = requestType;
         this.mappingPath = mappingPath;
         this.order = order;
+        this.invoker = invoker;
     }
 
     //TODO:这个url应该是验证PathVariable
@@ -79,7 +82,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     public Object handle(RequestParamHolder holder) {
          try {
              Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
-             return methodHandle.invoke(arguments);
+             return method.invoke(invoker, arguments);
          } catch (Throwable e) {
              e.printStackTrace();
              return null;

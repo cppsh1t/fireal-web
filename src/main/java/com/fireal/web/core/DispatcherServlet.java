@@ -39,37 +39,28 @@ public class DispatcherServlet extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         Collection<BeanDefinition> beanDefinitions = BeanDefinitionUtil.getBeanDefinitions(container);
-        Lookup lookup = MethodHandles.lookup();
-
         for (var def : beanDefinitions) {
-            if (!ReflectUtil.isHandler(def.getObjectType()))
-                continue;
+            if (!ReflectUtil.isHandler(def.getObjectType())) continue;
             Collection<Method> methods = ReflectUtil.getRequestMethods(def.getObjectType());
-            if (methods == null || methods.size() == 0)
-                continue;
+            if (methods == null || methods.size() == 0) continue;
 
             String handlerMappingPath = ReflectUtil.getMappingPath(def.getObjectType());
+            Object invoker = container.getBean(def.getKeyType());
             for (Method method : methods) {
                 RequestType requestType = ReflectUtil.getRequestType(method);
                 String mappingPath = ReflectUtil.getMappingPath(method);
                 mappingPath = handlerMappingPath + mappingPath;
-                try {
-                    MethodHandle methodHandle = lookup.unreflect(method);
-                    methodHandle = methodHandle.bindTo(container.getBean(def.getKeyType()));
-                    int order = 0;
-                    if (method.isAnnotationPresent(Order.class)) {
-                        order = method.getAnnotation(Order.class).value();
-                    }
-                    RequestHandleInfo requestHandleInfo = new RequestHandleInfo(methodHandle, requestType, mappingPath,
-                            order);
-                    Collection<RequestParamInfo> params = requestParamBuilder.build(method);
-                    String[] limits = ReflectUtil.getMappingLimit(method);
-                    requestHandleInfo.addRequestMappingLimit(limits);
-                    if (params != null) requestHandleInfo.addRequestParam(params);
-                    requestHandleInfos.add(requestHandleInfo);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                int order = 0;
+                if (method.isAnnotationPresent(Order.class)) {
+                    order = method.getAnnotation(Order.class).value();
                 }
+                RequestHandleInfo requestHandleInfo =
+                        new RequestHandleInfo(method, invoker, requestType, mappingPath, order);
+                Collection<RequestParamInfo> params = requestParamBuilder.build(method);
+                String[] limits = ReflectUtil.getMappingLimit(method);
+                requestHandleInfo.addRequestMappingLimit(limits);
+                if (params != null) requestHandleInfo.addRequestParam(params);
+                requestHandleInfos.add(requestHandleInfo);
             }
 
         }
@@ -97,15 +88,16 @@ public class DispatcherServlet extends HttpServlet {
         doRequestMapping(RequestType.PUT, req, resp);
     }
 
+    //FIXME: 映射关系有错误
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
         for (RequestHandleInfo info : requestHandleInfos) {
             if (!pathMatcher.match(info.getMappingPath(), mappingUrl) && info.getRequestType() == requestType)
                 continue;
-            RequestParamHolder requestParams = info.validate(mappingUrl, req, resp);
-            if (requestParams == null)
+            RequestParamHolder requestParamHolder = info.validate(mappingUrl, req, resp);
+            if (requestParamHolder == null)
                 continue;
-            Object result = info.handle(requestParams);
+            Object result = info.handle(requestParamHolder);
             if (result == null)
                 continue;
             writeResponse(resp, req, result);
@@ -149,7 +141,8 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private String getMappingUrl(HttpServletRequest req) {
-        String requestURI = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        String requestURI = req.getRequestURI().substring(contextPath.length());
         String queryString = req.getQueryString();
         return queryString == null ? requestURI : requestURI + "?" + queryString;
     }
