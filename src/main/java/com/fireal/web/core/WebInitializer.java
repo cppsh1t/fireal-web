@@ -1,6 +1,6 @@
 package com.fireal.web.core;
 
-import io.github.classgraph.ClassGraph;
+import com.fireal.web.util.TypeUtil;
 import jakarta.servlet.*;
 
 import java.lang.reflect.Constructor;
@@ -12,7 +12,9 @@ import com.fireal.web.data.JsonConverter;
 import com.fireal.web.exception.WebInitializationException;
 
 import fireal.core.Container;
+import jakarta.servlet.annotation.HandlesTypes;
 
+@HandlesTypes(WebApplicationInitializer.class)
 public class WebInitializer implements ServletContainerInitializer {
 
     private static JsonConverter defaultJsonConverter;
@@ -20,21 +22,10 @@ public class WebInitializer implements ServletContainerInitializer {
 
     @Override
     public void onStartup(Set<Class<?>> set, ServletContext ctx) {
-        Class<?> initClass = null;
-        ClassGraph classGraph = new ClassGraph();
-        classGraph.enableClassInfo();
-        var classInfos = classGraph.scan().getAllClasses();
-        var classes = classInfos.loadClasses(true);
-        for (Class<?> clazz : classes) {
-            if (WebApplicationInitializer.class.isAssignableFrom(clazz)) {
-                initClass = clazz;
-                break;
-            }
-        }
-
-        if (initClass == null) {
+        if (set == null || set.size() == 0) {
             throw new WebInitializationException("Can't find a class implements WebApplicationInitializer.");
         }
+        Class<?> initClass = set.stream().findFirst().orElse(null);
 
         WebApplicationInitializer initializer;
         try {
@@ -88,11 +79,12 @@ public class WebInitializer implements ServletContainerInitializer {
         if (jsonConverterMap.containsKey(targetType)) {
             return jsonConverterMap.get(targetType).stringToObject(str);
         } else {
-            return targetType.cast(str);
+            return TypeUtil.castString(str, targetType);
         }
     }
 
     //FIXME: 只能做一层的构造
+    //TODO: 按参数名字构造好像不对
     public static Object constructObject(Map<String, String> map, Class<?> targetType) {
         List<Constructor<?>> constructors = Arrays.stream(targetType.getConstructors())
                 .filter(con -> Arrays.stream(con.getParameters()).map(Parameter::getName)

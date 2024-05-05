@@ -13,6 +13,7 @@ import java.util.Map;
 import com.fireal.web.anno.Order;
 import com.fireal.web.path.AntPathMatcher;
 import com.fireal.web.path.PathMatcher;
+import com.fireal.web.util.DebugUtil;
 import com.fireal.web.util.ReflectUtil;
 
 import fireal.core.Container;
@@ -91,15 +92,22 @@ public class DispatcherServlet extends HttpServlet {
     //FIXME: 映射关系有错误
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
+        DebugUtil.log("正在处理请求", mappingUrl);
         for (RequestHandleInfo info : requestHandleInfos) {
-            if (!pathMatcher.match(info.getMappingPath(), mappingUrl) && info.getRequestType() == requestType)
+            DebugUtil.log("对比模式", info.getMappingPath());
+            String justPath = mappingUrl.contains("?") ? mappingUrl.split("\\?")[0] : mappingUrl;
+            if (!(pathMatcher.match(info.getMappingPath(), justPath)
+                    && RequestType.containType(info.getRequestType(), requestType)))
                 continue;
+            DebugUtil.log("找到对应的Handler", info);
             RequestParamHolder requestParamHolder = info.validate(mappingUrl, req, resp);
             if (requestParamHolder == null)
                 continue;
+            DebugUtil.log("参数处理完成", requestParamHolder);
             Object result = info.handle(requestParamHolder);
             if (result == null)
                 continue;
+            DebugUtil.log("处理结果", result);
             writeResponse(resp, req, result);
             break;
         }

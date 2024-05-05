@@ -346,7 +346,9 @@ public abstract class StringUtils {
 
     public static Map<String, String> parseQueryString(String pathString) {
         Map<String, String> queryParams = new HashMap<>();
-        String[] pairs = pathString.split("&");
+        if (!pathString.contains("?")) return queryParams;
+        String queryString = pathString.split("\\?")[1];
+        String[] pairs = queryString.split("&");
         for (String pair : pairs) {
             String[] keyValue = pair.split("=");
             if (keyValue.length == 2) {

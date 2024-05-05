@@ -6,5 +6,10 @@ public enum RequestType {
     GET,
     POST,
     PUT,
-    DELETE
+    DELETE;
+
+    public static boolean containType(RequestType source, RequestType other) {
+        if (source == RequestType.ALL) return true;
+        return source == other;
+    }
 }

@@ -9,7 +9,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import com.fireal.web.exception.RequestParamInfoException;
+import com.fireal.web.util.DebugUtil;
 import com.fireal.web.util.StringUtils;
+import com.fireal.web.util.TypeUtil;
 import fireal.structure.Tuple;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +39,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     //TODO: 以后再做空优化
     public RequestParamHolder validate(String url, HttpServletRequest req, HttpServletResponse resp) {
         Map<String, String> queryMap = StringUtils.parseQueryString(url);
+        DebugUtil.log("验证map", queryMap);
         boolean containAll = requestMappingLimit.stream().allMatch(queryMap::containsKey);
         if (!containAll) return null;
         RequestParamHolder requestParamHolder = new RequestParamHolder();
@@ -66,10 +69,13 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
                 } else {
                     Class<?> targetType = requestParamInfo.getParamType();
                     Object targetObj;
-                    if (targetType.isPrimitive()) {
+                    if (TypeUtil.canCast(targetType)) {
+                        DebugUtil.log("primitive type cast", targetType.getName());
                         String targetStr = queryMap.get(requestParamInfo.getName());
                         targetObj = WebInitializer.stringToObject(targetStr, targetType);
+                        if (targetObj == null) return null;
                     } else {
+                        DebugUtil.log("complex type cast", targetType.getName());
                         targetObj = WebInitializer.constructObject(queryMap, targetType);
                     }
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
@@ -82,6 +88,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     public Object handle(RequestParamHolder holder) {
          try {
              Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
+             DebugUtil.log("casted arguments is", Arrays.toString(arguments));
              return method.invoke(invoker, arguments);
          } catch (Throwable e) {
              e.printStackTrace();
@@ -124,5 +131,13 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
 
     public void addRequestMappingLimit(String... limit) {
         requestMappingLimit.addAll(Arrays.asList(limit));
+    }
+
+    @Override
+    public String toString() {
+        return "RequestHandleInfo{" +
+                "requestType=" + requestType +
+                ", mappingPath='" + mappingPath + '\'' +
+                '}';
     }
 }
