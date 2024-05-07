@@ -1,8 +1,6 @@
 package com.fireal.web.core;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
-import java.net.http.HttpHeaders;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +37,6 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     //TODO: 以后再做空优化
     public RequestParamHolder validate(String url, HttpServletRequest req, HttpServletResponse resp) {
         Map<String, String> queryMap = StringUtils.parseQueryString(url);
-        DebugUtil.log("验证map", queryMap);
         boolean containAll = requestMappingLimit.stream().allMatch(queryMap::containsKey);
         if (!containAll) return null;
         RequestParamHolder requestParamHolder = new RequestParamHolder();
@@ -62,7 +59,6 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
             } else {
                 String targetString = queryMap.get(requestParamInfo.getName());
                 if (targetString == null) {
-                    //TODO: write this exception type
                     if (requestParamInfo.isRequired()) return null;
                     Object targetObj = requestParamInfo.getDefaultValue();
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
@@ -75,8 +71,8 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
                         targetObj = WebInitializer.stringToObject(targetStr, targetType);
                         if (targetObj == null) return null;
                     } else {
-                        DebugUtil.log("complex type cast", targetType.getName());
-                        targetObj = WebInitializer.constructObject(queryMap, targetType);
+                        DebugUtil.log("complex type make", targetType.getName());
+                        targetObj = requestParamInfo.getConstructorInfo().build(queryMap);
                     }
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 }

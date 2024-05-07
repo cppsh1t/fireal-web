@@ -1,5 +1,7 @@
 package com.fireal.web.core;
 
+import com.fireal.web.data.ConstructorInfo;
+
 public class RequestParamInfo {
 
     private Class<?> paramAnnoClass;
@@ -8,17 +10,30 @@ public class RequestParamInfo {
     private boolean required;
     private Class<?> paramType;
     private Class<?> originType;
+    private ConstructorInfo constructorInfo;
 
-    public RequestParamInfo(Class<?> paramAnnoClass, String name, Object defaultValue, boolean required, Class<?> paramType) {
-        this.paramAnnoClass = paramAnnoClass;
-        this.name = name;
-        this.defaultValue = defaultValue;
-        this.required = required;
-        this.paramType = paramType;
+    private RequestParamInfo() { }
+
+    public static RequestParamInfo simple(Class<?> paramAnnoClass, String name, Object defaultValue, boolean required, Class<?> paramType) {
+        RequestParamInfo requestParamInfo = new RequestParamInfo();
+        requestParamInfo.paramAnnoClass = paramAnnoClass;
+        requestParamInfo.name = name;
+        requestParamInfo.defaultValue = defaultValue;
+        requestParamInfo.required = required;
+        requestParamInfo.paramType = paramType;
+        return requestParamInfo;
     }
 
-    public RequestParamInfo(Class<?> originType) {
-        this.originType = originType;
+    public static RequestParamInfo origin(Class<?> clazz) {
+        RequestParamInfo requestParamInfo = new RequestParamInfo();
+        requestParamInfo.originType = clazz;
+        return requestParamInfo;
+    }
+
+    public static RequestParamInfo complex(Class<?> clazz) {
+        RequestParamInfo requestParamInfo = new RequestParamInfo();
+        requestParamInfo.constructorInfo = ConstructorInfo.make(clazz);
+        return requestParamInfo;
     }
 
     public Class<?> getParamAnnoClass() {
@@ -43,5 +58,9 @@ public class RequestParamInfo {
 
     public Class<?> getParamType() {
         return paramType;
+    }
+
+    public ConstructorInfo getConstructorInfo() {
+        return constructorInfo;
     }
 }

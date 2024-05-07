@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 
 import com.fireal.web.anno.RequestParamType;
-import com.fireal.web.exception.RequestParamInfoException;
 import com.fireal.web.util.ReflectUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,14 +30,14 @@ public class RequestParamBuilder {
                 String defaultValue = ReflectUtil.invokeMethodInAnnotation(annotation, "defaultValue", null);
                 boolean required = ReflectUtil.invokeMethodInAnnotation(annotation, "required", null);
                 RequestParamInfo requestParam
-                        = new RequestParamInfo(annotation.annotationType(), name, defaultValue, required, parameter.getType());
+                        = RequestParamInfo.simple(annotation.annotationType(), name, defaultValue, required, parameter.getType());
                 params.add(requestParam);
             } else {
                 Class<?> annoType = annotation.annotationType();
                 if (annoType == HttpServletRequest.class || annoType == HttpServletResponse.class || annoType == HttpSession.class) {
-                    params.add(new RequestParamInfo(annoType));
+                    params.add(RequestParamInfo.origin(annoType));
                 } else {
-                    throw new RequestParamInfoException(annoType);
+                    params.add(RequestParamInfo.complex(parameter.getType()));
                 }
             }
 

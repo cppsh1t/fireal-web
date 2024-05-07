@@ -1,9 +1,6 @@
 package com.fireal.web.core;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,8 +85,7 @@ public class DispatcherServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         doRequestMapping(RequestType.PUT, req, resp);
     }
-
-    //FIXME: 映射关系有错误
+    
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
         DebugUtil.log("正在处理请求", mappingUrl);

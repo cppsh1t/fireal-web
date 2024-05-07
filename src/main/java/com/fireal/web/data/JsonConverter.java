@@ -2,14 +2,6 @@ package com.fireal.web.data;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fireal.web.core.WebInitializer;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 public interface JsonConverter {
 
