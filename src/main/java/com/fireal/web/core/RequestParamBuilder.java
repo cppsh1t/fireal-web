@@ -33,9 +33,9 @@ public class RequestParamBuilder {
                         = RequestParamInfo.simple(annotation.annotationType(), name, defaultValue, required, parameter.getType());
                 params.add(requestParam);
             } else {
-                Class<?> annoType = annotation.annotationType();
-                if (annoType == HttpServletRequest.class || annoType == HttpServletResponse.class || annoType == HttpSession.class) {
-                    params.add(RequestParamInfo.origin(annoType));
+                Class<?> paramType = parameter.getType();
+                if (paramType == HttpServletRequest.class || paramType == HttpServletResponse.class || paramType == HttpSession.class) {
+                    params.add(RequestParamInfo.origin(paramType));
                 } else {
                     params.add(RequestParamInfo.complex(parameter.getType()));
                 }

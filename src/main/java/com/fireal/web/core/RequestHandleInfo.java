@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
+public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
 
     private final Method method;
     private final RequestType requestType;
@@ -40,7 +40,7 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
         boolean containAll = requestMappingLimit.stream().allMatch(queryMap::containsKey);
         if (!containAll) return null;
         RequestParamHolder requestParamHolder = new RequestParamHolder();
-        for(RequestParamInfo requestParamInfo : requestParams) {
+        for (RequestParamInfo requestParamInfo : requestParams) {
             Class<?> originType = requestParamInfo.getOriginType();
             if (originType != null) {
                 if (originType == HttpServletRequest.class) {
@@ -58,22 +58,22 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
                 throw new RequestParamInfoException(originType);
             } else {
                 String targetString = queryMap.get(requestParamInfo.getName());
-                if (targetString == null) {
+                if (requestParamInfo.getConstructorInfo() != null) {
+                    Object targetObj = requestParamInfo.getConstructorInfo().build(queryMap);
+                    requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
+                } else if (targetString == null) {
                     if (requestParamInfo.isRequired()) return null;
                     Object targetObj = requestParamInfo.getDefaultValue();
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 } else {
                     Class<?> targetType = requestParamInfo.getParamType();
                     Object targetObj;
-                    if (TypeUtil.canCast(targetType)) {
-                        DebugUtil.log("primitive type cast", targetType.getName());
-                        String targetStr = queryMap.get(requestParamInfo.getName());
-                        targetObj = WebInitializer.stringToObject(targetStr, targetType);
-                        if (targetObj == null) return null;
-                    } else {
-                        DebugUtil.log("complex type make", targetType.getName());
-                        targetObj = requestParamInfo.getConstructorInfo().build(queryMap);
-                    }
+                    if (!TypeUtil.canCast(targetType)) throw new RuntimeException();//TODO: cant cast
+                    DebugUtil.log("primitive type cast", targetType.getName());
+                    String targetStr = queryMap.get(requestParamInfo.getName());
+                    targetObj = WebInitializer.stringToObject(targetStr, targetType);
+                    if (targetObj == null) return null;
+
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 }
             }
@@ -82,14 +82,14 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo>{
     }
 
     public Object handle(RequestParamHolder holder) {
-         try {
-             Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
-             DebugUtil.log("casted arguments is", Arrays.toString(arguments));
-             return method.invoke(invoker, arguments);
-         } catch (Throwable e) {
-             e.printStackTrace();
-             return null;
-         }
+        try {
+            Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
+            DebugUtil.log("casted arguments is", Arrays.toString(arguments));
+            return method.invoke(invoker, arguments);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public RequestType getRequestType() {
