@@ -15,7 +15,6 @@ public class Router {
 
     }
 
-
     public String getUrl() {
         return url;
     }
@@ -24,6 +23,12 @@ public class Router {
         return routerType;
     }
 
+    /**
+     * Redirects the request to a new URL.
+     *
+     * @param url The URL to which the request should be redirected.
+     * @return The router responsible for performing the redirection.
+     */
     public static Router redirect(String url) {
         Router router = redirectCache.release();
         router.url = url;
@@ -31,6 +36,12 @@ public class Router {
         return router;
     }
 
+    /**
+     * Forwards the request to a new URL.
+     *
+     * @param url The URL to which the request should be forwarded.
+     * @return The router responsible for handling the forwarding process.
+     */
     public static Router forward(String url) {
         Router router = redirectCache.release();
         router.url = url;
@@ -47,17 +58,17 @@ public class Router {
         FORWARD
     }
 
-
-    private static class RouterCache implements ObjectPool<Router>{
+    private static class RouterCache implements ObjectPool<Router> {
 
         private final Stack<WeakReference<Router>> objStack = new Stack<>();
 
         @Override
         public Router release() {
             if (!objStack.isEmpty()) {
-                for(int i = 0; i < objStack.size(); i++) {
+                for (int i = 0; i < objStack.size(); i++) {
                     var obj = objStack.pop().get();
-                    if (obj != null) return obj;
+                    if (obj != null)
+                        return obj;
                 }
             }
 

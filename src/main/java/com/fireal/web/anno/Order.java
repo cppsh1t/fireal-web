@@ -3,6 +3,9 @@ package com.fireal.web.anno;
 
 import java.lang.annotation.*;
 
+/**
+ * The order of request handler
+ */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

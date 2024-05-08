@@ -4,6 +4,9 @@ import fireal.definition.EmptyType;
 
 import java.lang.annotation.*;
 
+/**
+ * Declaring this class as a Service
+ */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

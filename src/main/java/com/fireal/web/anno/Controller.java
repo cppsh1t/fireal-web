@@ -5,6 +5,9 @@ import fireal.definition.EmptyType;
 
 import java.lang.annotation.*;
 
+/**
+ * Declaring this class as a Controller
+ */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
