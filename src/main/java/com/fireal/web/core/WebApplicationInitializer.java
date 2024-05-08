@@ -20,4 +20,8 @@ public interface WebApplicationInitializer {
     default Class<? extends Container> getContainerClass() {
         return WebAppContainer.class;
     } 
+
+    default Class<?> getSecurityClass() {
+        return null;
+    }
 } 
