@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.fireal.web.path.AntPathMatcher;
+import io.github.cppsh1t.fireal.web.path.AntPathMatcher;
 
 public class MainTest {
 
