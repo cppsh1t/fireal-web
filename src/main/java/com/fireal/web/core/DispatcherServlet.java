@@ -5,8 +5,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
 import com.fireal.web.anno.Order;
 import com.fireal.web.path.AntPathMatcher;
 import com.fireal.web.path.PathMatcher;
@@ -109,12 +107,6 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private Map<String, Object> parsePathVariable(String path) {
-        // TODO:
-        return null;
-    }
-
-    //TODO: 还要有传输值类型的判定
     private void writeResponse(HttpServletResponse resp, HttpServletRequest req, Object result) {
         if (result instanceof Router router) {
             String url = router.getUrl();
@@ -144,7 +136,7 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private String getMappingUrl(HttpServletRequest req) {
+    public static String getMappingUrl(HttpServletRequest req) {
         String contextPath = req.getContextPath();
         String requestURI = req.getRequestURI().substring(contextPath.length());
         String queryString = req.getQueryString();

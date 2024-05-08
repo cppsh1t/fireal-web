@@ -18,6 +18,7 @@ public class WebInitializer implements ServletContainerInitializer {
 
     private static JsonConverter defaultJsonConverter;
     private static final Map<Class<?>, JsonConverter> jsonConverterMap = new HashMap<>();
+    private static Container container;
 
     @Override
     public void onStartup(Set<Class<?>> set, ServletContext ctx) {
@@ -50,7 +51,6 @@ public class WebInitializer implements ServletContainerInitializer {
             throw new WebInitializationException("Can't find right constructor on " + containerClass);
         }
 
-        Container container;
         try {
             container = constructorOfContainer.newInstance(initializer.getConfigClass());
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
@@ -62,7 +62,7 @@ public class WebInitializer implements ServletContainerInitializer {
         servlet.addMapping("/");
         servlet.setLoadOnStartup(0);
 
-        FilterRegistration.Dynamic filter = ctx.addFilter("mainFilter", new MainFilter());
+        FilterRegistration.Dynamic filter = ctx.addFilter("mainFilter", new InterceptorFilter());
         filter.addMappingForUrlPatterns(null, true, "/*");
     }
 
@@ -80,5 +80,9 @@ public class WebInitializer implements ServletContainerInitializer {
         } else {
             return TypeUtil.castString(str, targetType);
         }
+    }
+
+    public static Container getContainer() {
+        return container;
     }
 }
