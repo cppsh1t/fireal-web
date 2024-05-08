@@ -1,7 +1,12 @@
 package com.fireal.web.exception;
 
 public class RequestParamInfoException extends RuntimeException {
+
+    public RequestParamInfoException() {
+        super("Can't build RequestParamInfo.");
+    }
+
     public RequestParamInfoException(Class<?> clazz) {
-        super("Can't build a RequestParamInfo which class is " + clazz + ".");
+        super("Can't build RequestParamInfo which class is " + clazz + ".");
     }
 }

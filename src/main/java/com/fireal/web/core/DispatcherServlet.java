@@ -5,12 +5,15 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.slf4j.LoggerFactory;
+
 import com.fireal.web.anno.Order;
 import com.fireal.web.path.AntPathMatcher;
 import com.fireal.web.path.PathMatcher;
-import com.fireal.web.util.DebugUtil;
 import com.fireal.web.util.ReflectUtil;
 
+import ch.qos.logback.classic.Logger;
 import fireal.core.Container;
 import fireal.definition.BeanDefinition;
 import fireal.util.BeanDefinitionUtil;
@@ -21,6 +24,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class DispatcherServlet extends HttpServlet {
+
+    private static final Logger log = (Logger) LoggerFactory.getLogger(DispatcherServlet.class);
 
     private final Container container;
     private final List<RequestHandleInfo> requestHandleInfos = new ArrayList<>();
@@ -34,9 +39,11 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
+        log.info("Initializing DispatcherServlet...");
         Collection<BeanDefinition> beanDefinitions = BeanDefinitionUtil.getBeanDefinitions(container);
         for (var def : beanDefinitions) {
             if (!ReflectUtil.isHandler(def.getObjectType())) continue;
+            log.debug("Found handler class: {}", def.getObjectType().getName());
             Collection<Method> methods = ReflectUtil.getRequestMethods(def.getObjectType());
             if (methods == null || methods.size() == 0) continue;
 
@@ -57,11 +64,13 @@ public class DispatcherServlet extends HttpServlet {
                 requestHandleInfo.addRequestMappingLimit(limits);
                 if (params != null) requestHandleInfo.addRequestParam(params);
                 requestHandleInfos.add(requestHandleInfo);
+                log.debug("Mapped method: {} to path: {}", method.getName(), mappingPath);
             }
 
         }
 
         requestHandleInfos.sort(RequestHandleInfo::compareTo);
+        log.info("DispatcherServlet initialization complete.");
     }
 
     @Override
@@ -86,25 +95,41 @@ public class DispatcherServlet extends HttpServlet {
     
     private void doRequestMapping(RequestType requestType, HttpServletRequest req, HttpServletResponse resp) {
         String mappingUrl = getMappingUrl(req);
-        DebugUtil.log("正在处理请求", mappingUrl);
+        log.debug("Handling request [{}] for URL: {}", requestType, mappingUrl);
         for (RequestHandleInfo info : requestHandleInfos) {
-            DebugUtil.log("对比模式", info.getMappingPath());
-            String justPath = mappingUrl.contains("?") ? mappingUrl.split("\\?")[0] : mappingUrl;
-            if (!(pathMatcher.match(info.getMappingPath(), justPath)
-                    && RequestType.containType(info.getRequestType(), requestType)))
-                continue;
-            DebugUtil.log("找到对应的Handler", info);
-            RequestParamHolder requestParamHolder = info.validate(mappingUrl, req, resp);
-            if (requestParamHolder == null)
-                continue;
-            DebugUtil.log("参数处理完成", requestParamHolder);
-            Object result = info.handle(requestParamHolder);
-            if (result == null)
-                continue;
-            DebugUtil.log("处理结果", result);
-            writeResponse(resp, req, result);
-            break;
+            if (matches(info, mappingUrl, requestType)) {
+                handleRequest(info, mappingUrl, req, resp);
+                return;
+            }
         }
+        log.warn("No matching handler found for request [{}] and URL: {}", requestType, mappingUrl);
+    }
+
+    private boolean matches(RequestHandleInfo info, String mappingUrl, RequestType requestType) {
+        String justPath = mappingUrl.contains("?") ? mappingUrl.split("\\?")[0] : mappingUrl;
+        boolean pathMatched = pathMatcher.match(info.getMappingPath(), justPath);
+        boolean typeMatched = RequestType.containType(info.getRequestType(), requestType);
+    
+        if (pathMatched && typeMatched) {
+            log.trace("Matched request [{}] to handler: {}", requestType, info);
+        }
+        return pathMatched && typeMatched;
+    }
+
+    private void handleRequest(RequestHandleInfo info, String mappingUrl, HttpServletRequest req, HttpServletResponse resp) {
+        RequestParamHolder requestParamHolder = info.validate(mappingUrl, req, resp);
+        if (requestParamHolder == null) {
+            log.warn("Validation failed for request parameters.");
+            return;
+        }
+    
+        Object result = info.handle(requestParamHolder);
+        if (result == null) {
+            log.warn("Handler returned null, no response to write.");
+            return;
+        }
+    
+        writeResponse(resp, req, result);
     }
 
     private void writeResponse(HttpServletResponse resp, HttpServletRequest req, Object result) {
@@ -115,24 +140,28 @@ public class DispatcherServlet extends HttpServlet {
             try {
                 if (routerType == Router.RouterType.FORWARD) {
                     RequestDispatcher dispatcher = req.getRequestDispatcher(url);
+                    log.debug("Forwarding request to: {}", url);
                     dispatcher.forward(req, resp);
                 } else {
+                    log.debug("Redirecting to: {}", url);
                     resp.sendRedirect(url);
                 }
             } catch (ServletException | IOException e) {
-                e.printStackTrace();
+                log.error("Error forwarding/redirecting request: ", e);
             }
         }
 
         try {
             if (result instanceof String str) {
                 resp.getWriter().write(str);
+                log.debug("Wrote response to client.");
             } else {
                 String json = WebInitializer.objectToJson(result);
                 resp.getWriter().write(json);
+                log.debug("Wrote response to client.");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error writing response: ", e);
         }
     }
 

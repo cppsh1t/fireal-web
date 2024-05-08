@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.RuntimeErrorException;
-
 import com.fireal.web.anno.RequestParam;
 import com.fireal.web.core.WebInitializer;
 import com.fireal.web.exception.RequestParamInfoException;
@@ -75,7 +73,8 @@ public class ConstructorInfo {
     public Object build(Map<String, String> map) {
         for (var info : infos) {
             boolean legal = info.getFirstKey().stream().allMatch(p -> map.containsKey(p.name));
-            if (!legal) continue;
+            if (!legal)
+                continue;
             Constructor<?> constructor = info.getSecondKey();
             Object[] args = new Object[constructor.getParameterCount()];
             List<ParameterInfo> list = info.getFirstKey();
@@ -96,14 +95,14 @@ public class ConstructorInfo {
             return defaultConstructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
-            throw new RuntimeErrorException(null);//TODO: cant make
+            throw new RequestParamInfoException();
         }
     }
 
     public static ConstructorInfo make(Class<?> clazz) {
         ConstructorInfo constructorInfo = new ConstructorInfo(clazz);
         if (constructorInfo.defaultConstructor == null && constructorInfo.infos.size() == 0) {
-            throw new RequestParamInfoException(clazz);// TODO: no right constructor
+            throw new RequestParamInfoException(clazz);
         }
         return constructorInfo;
     }

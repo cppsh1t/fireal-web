@@ -6,16 +6,22 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import org.slf4j.LoggerFactory;
+
+import com.fireal.web.exception.ParamterCastException;
 import com.fireal.web.exception.RequestParamInfoException;
-import com.fireal.web.util.DebugUtil;
 import com.fireal.web.util.StringUtils;
 import com.fireal.web.util.TypeUtil;
+
+import ch.qos.logback.classic.Logger;
 import fireal.structure.Tuple;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
+
+    private static final Logger log = (Logger) LoggerFactory.getLogger(RequestHandleInfo.class);
 
     private final Method method;
     private final RequestType requestType;
@@ -33,12 +39,14 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
         this.invoker = invoker;
     }
 
-    //TODO:这个url应该是验证PathVariable
-    //TODO: 以后再做空优化
     public RequestParamHolder validate(String url, HttpServletRequest req, HttpServletResponse resp) {
+        log.debug("Validating request parameters for URL: {}", url);
         Map<String, String> queryMap = StringUtils.parseQueryString(url);
         boolean containAll = requestMappingLimit.stream().allMatch(queryMap::containsKey);
-        if (!containAll) return null;
+        if (!containAll) {
+            log.debug("Request mapping limit not satisfied for URL: {}", url);
+            return null;
+        }
         RequestParamHolder requestParamHolder = new RequestParamHolder();
         for (RequestParamInfo requestParamInfo : requestParams) {
             Class<?> originType = requestParamInfo.getOriginType();
@@ -62,32 +70,35 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
                     Object targetObj = requestParamInfo.getConstructorInfo().build(queryMap);
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 } else if (targetString == null) {
-                    if (requestParamInfo.isRequired()) return null;
+                    if (requestParamInfo.isRequired())
+                        return null;
                     Object targetObj = requestParamInfo.getDefaultValue();
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 } else {
                     Class<?> targetType = requestParamInfo.getParamType();
                     Object targetObj;
-                    if (!TypeUtil.canCast(targetType)) throw new RuntimeException();//TODO: cant cast
-                    DebugUtil.log("primitive type cast", targetType.getName());
-                    String targetStr = queryMap.get(requestParamInfo.getName());
-                    targetObj = WebInitializer.stringToObject(targetStr, targetType);
-                    if (targetObj == null) return null;
+                    if (!TypeUtil.canCast(targetType))
+                        throw new ParamterCastException(targetString, targetType);
+                    targetObj = WebInitializer.stringToObject(targetString, targetType);
+                    if (targetObj == null)
+                        return null;
 
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 }
             }
         }
+        log.debug("Validation of request parameters successful for URL: {}", url);
         return requestParamHolder;
     }
 
     public Object handle(RequestParamHolder holder) {
         try {
             Object[] arguments = holder.contents.stream().map(Tuple::getSecondKey).toArray();
-            DebugUtil.log("casted arguments is", Arrays.toString(arguments));
-            return method.invoke(invoker, arguments);
+            Object result = method.invoke(invoker, arguments);
+            log.debug("Method invocation successful, result: {}", result);
+            return result;
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("Error handling request", e);
             return null;
         }
     }
