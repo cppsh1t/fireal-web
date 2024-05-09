@@ -107,6 +107,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private boolean matches(RequestHandleInfo info, String mappingUrl, RequestType requestType) {
         String justPath = mappingUrl.contains("?") ? mappingUrl.split("\\?")[0] : mappingUrl;
+        log.debug("Match request {} with pattern {}", justPath, info.getMappingPath());
         boolean pathMatched = pathMatcher.match(info.getMappingPath(), justPath);
         boolean typeMatched = RequestType.containType(info.getRequestType(), requestType);
     
@@ -154,12 +155,11 @@ public class DispatcherServlet extends HttpServlet {
         try {
             if (result instanceof String str) {
                 resp.getWriter().write(str);
-                log.debug("Wrote response to client.");
             } else {
                 String json = WebInitializer.objectToJson(result);
                 resp.getWriter().write(json);
-                log.debug("Wrote response to client.");
             }
+            log.debug("Wrote response to client.");
         } catch (IOException e) {
             log.error("Error writing response: ", e);
         }

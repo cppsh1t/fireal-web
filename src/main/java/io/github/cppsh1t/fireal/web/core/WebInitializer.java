@@ -1,5 +1,6 @@
 package io.github.cppsh1t.fireal.web.core;
 
+import ch.qos.logback.classic.Logger;
 import io.github.cppsh1t.fireal.web.util.TypeUtil;
 import io.github.cppsh1t.fireal.web.exception.WebInitializationException;
 import jakarta.servlet.*;
@@ -12,6 +13,7 @@ import io.github.cppsh1t.fireal.web.data.JsonConverter;
 
 import io.github.cppsh1t.fireal.core.Container;
 import jakarta.servlet.annotation.HandlesTypes;
+import org.slf4j.LoggerFactory;
 
 @HandlesTypes(WebApplicationInitializer.class)
 public class WebInitializer implements ServletContainerInitializer {
@@ -19,6 +21,7 @@ public class WebInitializer implements ServletContainerInitializer {
     private static JsonConverter defaultJsonConverter;
     private static final Map<Class<?>, JsonConverter> jsonConverterMap = new HashMap<>();
     private static Container container;
+    private static final Logger log = (Logger) LoggerFactory.getLogger(DispatcherServlet.class);
 
     @Override
     public void onStartup(Set<Class<?>> set, ServletContext ctx) {
@@ -53,8 +56,8 @@ public class WebInitializer implements ServletContainerInitializer {
 
         try {
             container = constructorOfContainer.newInstance(initializer.getConfigClass());
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
+        } catch (Exception e) {
+            log.error("Error in construct container", e);
             throw new WebInitializationException("Can't make instance of " + containerClass);
         }
 
@@ -62,7 +65,7 @@ public class WebInitializer implements ServletContainerInitializer {
         servlet.addMapping("/");
         servlet.setLoadOnStartup(0);
 
-        FilterRegistration.Dynamic filter = ctx.addFilter("mainFilter", new InterceptorFilter());
+        FilterRegistration.Dynamic filter = ctx.addFilter("interceptorFilter", new InterceptorFilter());
         filter.addMappingForUrlPatterns(null, true, "/*");
     }
 
