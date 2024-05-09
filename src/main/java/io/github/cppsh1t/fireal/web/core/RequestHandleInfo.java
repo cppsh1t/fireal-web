@@ -63,11 +63,12 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, req.getSession()));
                     continue;
                 }
-                throw new RequestParamInfoException(originType);
+                log.error(new RequestParamInfoException(originType).getMessage());
             } else {
                 String targetString = queryMap.get(requestParamInfo.getName());
                 if (requestParamInfo.getConstructorInfo() != null) {
                     Object targetObj = requestParamInfo.getConstructorInfo().build(queryMap);
+                    if (targetObj == null) return null;
                     requestParamHolder.contents.add(new Tuple<>(requestParamInfo, targetObj));
                 } else if (targetString == null) {
                     if (requestParamInfo.isRequired())
@@ -77,8 +78,11 @@ public class RequestHandleInfo implements Comparable<RequestHandleInfo> {
                 } else {
                     Class<?> targetType = requestParamInfo.getParamType();
                     Object targetObj;
-                    if (!TypeUtil.canCast(targetType))
-                        throw new ParameterCastException(targetString, targetType);
+                    if (!TypeUtil.canCast(targetType)) {
+                        Exception e = new ParameterCastException(targetString, targetType);
+                        log.error(e.getMessage());
+                        return null;
+                    }
                     targetObj = WebInitializer.stringToObject(targetString, targetType);
                     if (targetObj == null)
                         return null;

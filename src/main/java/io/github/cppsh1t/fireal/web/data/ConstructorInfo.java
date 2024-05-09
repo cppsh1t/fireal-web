@@ -90,11 +90,12 @@ public class ConstructorInfo {
                     | InvocationTargetException ignored) {
             }
         }
+        if (defaultConstructor == null) return null;
         try {
             return defaultConstructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
-            throw new RequestParamInfoException();
+            return null;
         }
     }
 
