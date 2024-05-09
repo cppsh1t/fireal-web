@@ -39,7 +39,6 @@ public class InterceptorFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        DebugUtil.log("do filter");
         if (authenticator != null)  {
             String url = DispatcherServlet.getMappingUrl(req);
             UserDetail userDetail = authenticator.resolve(req);
